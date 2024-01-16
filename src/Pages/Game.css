@@ -175,11 +175,14 @@
     left: 100%;
     top: 100%;
 }
+.possible-position{
+    background: #505050;
+}
 .player-pawn{
-    background: #22dd6a;
+    background: #ff02d5;
 }
 .ai-pawn{
-    background: #f83232;
+    background: #0048ff;
 }
 .selected{
     width: 2.5rem;

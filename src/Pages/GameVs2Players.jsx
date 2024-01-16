@@ -3,19 +3,16 @@ import './Game.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import constants from '../data/constants';
-import NotificationPopUp from '../Components/PopUps/NotificationPopUp';
-import { AnimatePresence } from 'framer-motion';
-import GameFinishedPopUp from '../Components/PopUps/GameFinishedPopUp';
 
-const Game = () => {
+const GameVs2Players = () => {
     const {game_id} = useParams();
     const [TableData,setTableData] = useState([]);
     const [GameState,setGameState] = useState();
-    const [CanPlayerJump,setCanPlayerJump] = useState(false);
+    const [CanPlayer1Jump,setCanPlayer1Jump] = useState(false);
+    const [CanPlayer2Jump,setCanPlayer2Jump] = useState(false);
     const [SelectedPiece,setSelectedPiece] = useState(-1);
     const [PossibleDirections,setPossibleDirections] = useState([]);
-    const [NotificationPopUpState, setNotificationPopUpState] = useState(null);
-    const [GameFinishedPopupState, setGameFinishedPopupState] = useState(null);
+    const [PlayerWhoNeedsToMove,setPlayerWhoNeedsToMove] = useState(constants.PLAYER1_SLOT);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -34,9 +31,10 @@ const Game = () => {
         console.log(response.data);
         if (response.data.status == constants.SUCCESS_CODE) {
             setGameState(response.data.game_state);
-            setCanPlayerJump(response.data.can_player_1_jump)
+            setCanPlayer1Jump(response.data.can_player_1_jump)
+            setCanPlayer2Jump(response.data.can_player_2_jump)
             if (response.data.game_state == constants.GAME_ENDED)
-                setGameFinishedPopupState(true)
+                navigate("/")
         }
     }
 
@@ -50,25 +48,20 @@ const Game = () => {
 
     const placePawn = async (position) => {
         let table_matrix = [...TableData.table_matrix]
-        table_matrix[position] = constants.PLAYER_SLOT;
+        table_matrix[position] = PlayerWhoNeedsToMove
         setTableData({...TableData,table_matrix:table_matrix});
-        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/place_pawn?game_id=${game_id}&position=${position}`);
+        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/place_pawn?game_id=${game_id}&position=${position}&player_slot=${PlayerWhoNeedsToMove}`);
         console.log(response.data);
         if (response.data.status == constants.SUCCESS_CODE) {
             getTableData();
+            setPlayerWhoNeedsToMove(PlayerWhoNeedsToMove==constants.PLAYER1_SLOT?constants.PLAYER2_SLOT:constants.PLAYER1_SLOT)
             getGameState();
         }  
-        else{
-            getTableData();
-            getGameState();
-            setNotificationPopUpState(response.data);
-            setTimeout(() => setNotificationPopUpState(null), 3000);
-        }
 
     }
 
     const movePawn = async (position,direction) => {
-        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/move_pawn?game_id=${game_id}&position=${SelectedPiece}&direction=${direction}`);
+        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/move_pawn?game_id=${game_id}&position=${SelectedPiece}&direction=${direction}&player_slot=${PlayerWhoNeedsToMove}`);
         console.log(response.data);
         if (response.data.status == constants.SUCCESS_CODE) {
             let table_matrix = [...TableData.table_matrix]
@@ -76,21 +69,15 @@ const Game = () => {
             table_matrix[SelectedPiece] = constants.EMPTY_SLOT;
             setTableData({...TableData,table_matrix:table_matrix});
             setSelectedPiece(-1)
-            setPossibleDirections([])
-            setTimeout(()=>{
-                getTableData();
-                getGameState();
-            },500)
+            setPlayerWhoNeedsToMove(PlayerWhoNeedsToMove==constants.PLAYER1_SLOT?constants.PLAYER2_SLOT:constants.PLAYER1_SLOT)
+            getTableData();
+            getGameState();
         }  
-        else{
-            setNotificationPopUpState(response.data);
-            setTimeout(() => setNotificationPopUpState(null), 3000);
-        }
 
     }
 
     const jumpPawn = async (position) => {
-        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/jump_pawn?game_id=${game_id}&position=${SelectedPiece}&new_position=${position}`);
+        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/jump_pawn?game_id=${game_id}&position=${SelectedPiece}&new_position=${position}&player_slot=${PlayerWhoNeedsToMove}`);
         console.log(response.data);
         if (response.data.status == constants.SUCCESS_CODE) {
             let table_matrix = [...TableData.table_matrix]
@@ -98,33 +85,23 @@ const Game = () => {
             table_matrix[SelectedPiece] = constants.EMPTY_SLOT;
             setTableData({...TableData,table_matrix:table_matrix});
             setSelectedPiece(-1)
-            setTimeout(()=>{
-                getTableData();
-                getGameState();
-            },500)
-        }  
-        else{
-            setNotificationPopUpState(response.data);
-            setTimeout(() => setNotificationPopUpState(null), 3000);
-        }
+            setPlayerWhoNeedsToMove(PlayerWhoNeedsToMove==constants.PLAYER1_SLOT?constants.PLAYER2_SLOT:constants.PLAYER1_SLOT)
+            getTableData();
+            getGameState();
+        } 
     }
 
-    const removePawn = async (position) => {    
-        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/remove_pawn?game_id=${game_id}&position=${position}`);
+    const removePawn = async (position) => {   
+        const player_slot = PlayerWhoNeedsToMove==constants.PLAYER1_SLOT?constants.PLAYER2_SLOT:constants.PLAYER1_SLOT 
+        const response = await axios.post(`${import.meta.env.VITE_SERVER_ADRESS}/remove_pawn?game_id=${game_id}&position=${position}&player_slot=${player_slot}`);
         console.log(response.data);
         if (response.data.status == constants.SUCCESS_CODE) {
             let table_matrix = [...TableData.table_matrix]
             table_matrix[position] = constants.EMPTY_SLOT;
             setTableData({...TableData,table_matrix:table_matrix});
-            setTimeout(()=>{
-                getTableData();
-                getGameState();
-            },500)
+            getTableData();
+            getGameState();
         }  
-        else{
-            setNotificationPopUpState(response.data);
-            setTimeout(() => setNotificationPopUpState(null), 3000);
-        }
 
     }
 
@@ -135,10 +112,6 @@ const Game = () => {
         if (response.data.status == constants.SUCCESS_CODE) {
             setPossibleDirections(response.data.possible_directions)
         }
-        else{
-            setNotificationPopUpState(response.data);
-            setTimeout(() => setNotificationPopUpState(null), 3000);
-        }
     }
 
 
@@ -146,21 +119,17 @@ const Game = () => {
         if (GameState == constants.FILL_THE_TABLE) 
             placePawn(index);
         else if (GameState == constants.MOVE_PIECES){
-            if (position == constants.PLAYER_SLOT){
+            if (position == PlayerWhoNeedsToMove){
                 selectPawn(index);
                 return;
             }
-            if (CanPlayerJump){
+            if ((CanPlayer1Jump && PlayerWhoNeedsToMove==constants.PLAYER1_SLOT) || ( CanPlayer2Jump && PlayerWhoNeedsToMove==constants.PLAYER2_SLOT)){
                 jumpPawn(index)
                 return
             }
             const direction_object = PossibleDirections.find((direction)=>direction.position==index);
             if (direction_object)
                 movePawn(index,direction_object.direction);
-            else{
-                setNotificationPopUpState("you can't move there!");
-                setTimeout(() => setNotificationPopUpState(null), 3000);
-            }
         }
         else if (GameState == constants.REMOVE_PIECES)
             removePawn(index);
@@ -171,8 +140,8 @@ const Game = () => {
     return (
         <div className="game">
             <div className="nr-of-pawns-placed">
-                <p>Player pawns: {TableData?.player1_pawns}</p>
-                <p>Ai pawns: {TableData?.player2_pawns}</p>
+                <p>Player 1 pawns: {TableData?.player1_pawns}</p>
+                <p>Player 2 pawns: {TableData?.player2_pawns}</p>
                 <p>{GameState==constants.FILL_THE_TABLE?"Fill the board!":(GameState==constants.MOVE_PIECES?"Move Pieces":"Remove Pieces")}</p>
             </div>
             <div className="table-grid">
@@ -182,18 +151,13 @@ const Game = () => {
                 <div className="horizontal-line line"></div>
                 <div className="vertical-line line"></div>
                 {TableData?.table_matrix?.map((position,index)=>{
-                    const direction_object = PossibleDirections.find((direction)=>direction.position==index);
-                    return <div className={`position position-${index} ${(direction_object && !CanPlayerJump)?"possible-position":""} ${SelectedPiece==index?"selected":""}  ${position==constants.PLAYER_SLOT?"player-pawn":""} ${position==constants.AI_SLOT?"ai-pawn":""}`} 
+                    return <div className={`position position-${index} ${SelectedPiece==index?"selected":""}  ${position==constants.PLAYER_SLOT?"player-pawn":""} ${position==constants.AI_SLOT?"ai-pawn":""}`} 
                         key={index} onClick={()=>handlePawnClick(position,index)}></div>
                 })}
             </div>
 
-            <AnimatePresence mode="wait">
-                {NotificationPopUpState && <NotificationPopUp close={() => setNotificationPopUpState(null)}>{NotificationPopUpState}</NotificationPopUp>}
-                {GameFinishedPopupState!=null && <GameFinishedPopUp has_player_won={GameFinishedPopupState} open_menu={()=>navigate('/')}/>}
-            </AnimatePresence>
         </div>
     );
 };
 
-export default Game;
+export default GameVs2Players;

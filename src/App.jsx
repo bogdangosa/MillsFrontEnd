@@ -7,6 +7,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import RootLayout from './Layouts/RootLayout'
 import Game from './Pages/Game'
 import ErrorPage from './Pages/ErrorPage'
+import GameVs2Players from './Pages/GameVs2Players'
 
 const router = createBrowserRouter([
   {
@@ -18,8 +19,12 @@ const router = createBrowserRouter([
         element: <Home />
       },
       {
-        path: '/game/:game_id',
+        path: '/ai_game/:game_id',
         element: <Game/>
+      },
+      {
+        path: '/2player_game/:game_id',
+        element: <GameVs2Players/>
       },
     ]
   }

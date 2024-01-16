@@ -1,0 +1,29 @@
+.notification-popup{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    z-index: 30;
+    left: 50%;
+    gap: 1rem;
+    transform: translateX(-50%);
+    top: 2rem;
+    background: #4d4d4d;
+    color: #fefefe;
+    padding: 0.3rem 1.5rem;
+    border-radius: 1rem;
+    -webkit-border-radius: 1rem;
+    -moz-border-radius: 1rem;
+    -ms-border-radius: 1rem;
+    -o-border-radius: 1rem;
+    -webkit-transform: translateX(-50%);
+    -moz-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    -o-transform: translateX(-50%);
+}
+
+.notification-popup p{
+    font-size: 1rem;
+    margin: 0;
+    padding: 0;
+}
